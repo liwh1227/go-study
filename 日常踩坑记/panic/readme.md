@@ -2,8 +2,6 @@
 
 ## Q1: 并发初始化sdk client导致panic
 
-### 背景
-
 该问题发生在某次生产环境中更新服务导致，只有服务启动时发生了panic，后面再没有出现过，由于查看服务的容器日志，将发生panic的地方进行了截取如下：
 
 ```log
@@ -70,6 +68,10 @@ func newLogger(logConfig *LogConfig, level zap.AtomicLevel) *zap.Logger {
 1. 我们为了并行开启监听任务，使用了go协程分别启动不同的监听任务；
 2. cron包中进行每次进行start job时都会启用一个新的协程来进行；
 
-定时任务开启后，会存在 `newSdkClient` 的情况，该方法会调用 `newLogger` ，这就会导致多协程并发写map，从而引发系统的panic。
+定时任务开启后，会存在 `newSdkClient` 的情况，该方法会调用 `newLogger` ，这就会导致多协程并发写map，从而引发系统的panic，但这个问题其实在线上时偶发性的，由于该方法被多线程并发访问是有几率的，所有并不是100%复现的问题。
 
-为了解决上述问题，其实需要在初始化sdk client时加上锁，防止多个协程同时进行sdk client的初始化。
+为了解决上述问题，其实需要在初始化sdk client时加上锁，防止多个协程同时进行sdk client的初始化，目前线上服务运行较稳定。
+
+
+## Q2: slice数组引发的panic问题
+
