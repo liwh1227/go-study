@@ -1,34 +1,32 @@
 package travel
 
 import (
-	"gateway/lib/log"
-	carbon_integral "gateway/service/carbon-integral"
-
-	cmresp "gitee.com/liwh1227/common/response"
 	"github.com/gin-gonic/gin"
+	cmresp "github.com/liwh1227/go-common/response"
 	"github.com/pkg/errors"
+	"qtx/common"
 )
 
 func GetExchangeByType(ctx *gin.Context) {
 	req, err := ctx.GetRawData()
 	if err != nil {
-		cmlogger.Error(err)
+		common.Log.Error(err)
 		cmresp.FailResponse(ctx, err)
 		return
 	}
 
 	if len(req) == 0 {
 		err = errors.New("request parameter is nil")
-		log.RequestLogger.Error(err)
+		common.Log.Error(err)
 		cmresp.FailResponse(ctx, err)
 		return
 	}
 
-	resp, err := carbon_integral.GetCarbonIntegralInfoByExchangeId(req)
-	if err != nil {
-		log.SystemLog().Error(err)
-		cmresp.FailResponse(ctx, err)
-		return
-	}
-	cmresp.SuccessResponse(ctx, resp)
+	//resp, err := carbon_integral.GetCarbonIntegralInfoByExchangeId(req)
+	//if err != nil {
+	//	common.Log.Error(err)
+	//	cmresp.FailResponse(ctx, err)
+	//	return
+	//}
+	cmresp.SuccessResponse(ctx, nil)
 }

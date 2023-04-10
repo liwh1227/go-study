@@ -2,8 +2,8 @@ package travel
 
 import (
 	"fmt"
-	cmresp "gitee.com/liwh1227/common/response"
 	"github.com/gin-gonic/gin"
+	cmresp "github.com/liwh1227/go-common/response"
 	"github.com/pkg/errors"
 )
 
