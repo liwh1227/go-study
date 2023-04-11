@@ -1,6 +1,6 @@
 # panic问题复盘
 
-## Q1: 并发初始化sdk client导致panic
+### Q1: 并发初始化sdk client导致panic
 
 该问题发生在某次生产环境中更新服务导致，只有服务启动时发生了panic，后面再没有出现过，由于查看服务的容器日志，将发生panic的地方进行了截取如下：
 
@@ -73,5 +73,74 @@ func newLogger(logConfig *LogConfig, level zap.AtomicLevel) *zap.Logger {
 为了解决上述问题，其实需要在初始化sdk client时加上锁，防止多个协程同时进行sdk client的初始化，目前线上服务运行较稳定。
 
 
-## Q2: slice数组引发的panic问题
+### Q2: slice数组引发的panic问题
+
+
+
+### Q3: 协程遍历切片的问题
+
+代码内容如下：
+
+```go
+
+package main
+
+import "fmt"
+
+func main() {
+	var s = []int{
+		0, 1, 2, 3, 4, 5,
+	}
+	singleRoutine(s)
+
+	multiRoutine(s)
+
+	multiRoutine2(s)
+	select {}
+
+}
+
+// 单协程打印
+func singleRoutine(s []int) {
+
+	for i := range s {
+		fmt.Println(s[i])
+	}
+}
+
+func multiRoutine(s []int) {
+	for i := range s {
+		go func() {
+			fmt.Println(s[i])
+		}()
+	}
+}
+
+func multiRoutine2(s []int) {
+	for i := range s {
+		go func(val int) {
+			fmt.Println(val)
+		}(s[i])
+	}
+}
+
+
+```
+
+上述代码对应的output如下：
+
+case1：
+singleRoutine: 0 1 2 3 4 5
+
+case2：
+multiRoutine: 4 5 5 5 5 5 
+
+case3：
+multiRoutine2: 3 0 1 5 2 4
+
+case1中可以正常的顺序的进行打印；
+
+case2则是第一个为4，后面的都为最后一个值；
+
+case3则是乱序将所有的值打印。case2之所以没有按照预期的进行输出，主要是因为`go routine`执行时，切片s已经range到最后一个了，此时协程将其当前读到的切片内容进行打印，case3则是利用了函数闭包传参，控制协程此时打印的值，但是没有控制协程的执行顺序，所以是乱序打印。
 
