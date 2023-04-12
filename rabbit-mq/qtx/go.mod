@@ -3,12 +3,14 @@ module qtx
 go 1.19
 
 require (
-	github.com/liwh1227/go-common v1.0.0-beta
 	github.com/gin-gonic/gin v1.9.0
+	github.com/liwh1227/go-common v1.0.0-beta
 	github.com/pkg/errors v0.9.1
+	github.com/rabbitmq/amqp091-go v1.8.0
 )
 
 require (
+	gitee.com/liwh1227/common v0.0.0-20220815030400-cac9bfc29d19 // indirect
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
