@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"qtx/api/router"
-	"qtx/common"
 	"time"
 )
 
@@ -14,28 +13,30 @@ func Run(ctx context.Context, errChan chan error) {
 	// panic 自动恢复
 	defer func() {
 		if err := recover(); err != nil {
-			common.Log.Error(err)
+			fmt.Println(err)
 			return
 		}
 	}()
 
 	start := time.Now()
 
+	router.Register(router.Qtx)
+
 	engine := router.Init()
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", "loclhost", 10000),
+		Addr:    fmt.Sprintf("%s:%d", "localhost", 10000),
 		Handler: engine,
 	}
 
-	common.Log.Info("http: successfully initialized %v", time.Since(start))
+	fmt.Printf("http: successfully initialized %v", time.Since(start))
 
 	// 启动http server
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
 			if err == http.ErrServerClosed {
 				errChan <- err
-				common.Log.Error("http: web server shutdown complete")
+				fmt.Println("http: web server shutdown complete")
 			} else {
 				fmt.Println("http: web server closed unexpect: ", err)
 			}

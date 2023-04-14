@@ -1,13 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"qtx/api"
 	"qtx/rabbitmq"
-	"sync"
+	"syscall"
+	"time"
 )
 
 func main() {
-	var wg sync.WaitGroup
 	fmt.Println("start api service success.")
 
 	conf := rabbitmq.Conf{
@@ -24,23 +28,37 @@ func main() {
 		return
 	}
 
-	queueName := "gateway.user.queue"
+	// 创建兑换的队列
+	err = rabbitmq.CreateExchangeQueue()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	wg.Add(1)
-	go func() {
-		if err := rabbitmq.NewConsumer(queueName, func(body []byte) error {
-			//if string(body) == "success" {
-			fmt.Println("consume msg :" + string(body))
-			return nil
-			//}
-			//return errors.New("consume msg failed!")
-		}); err != nil {
-			wg.Done()
-			fmt.Println(err)
-		}
-	}()
+	// 创建气泡队列
+	err = rabbitmq.CreateBubbleQueue()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	wg.Wait()
+	// 创建上下文
+	ctx, cancel := context.WithCancel(context.Background())
+	var errChan chan error
+	go api.Run(ctx, errChan)
+
+	// 主动退出信号
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	select {
+	case <-quit:
+		cancel()
+	case herr := <-errChan:
+		fmt.Println(herr)
+
+		time.Now().Unix()
+	}
 
 	fmt.Println("Main process exit")
 }

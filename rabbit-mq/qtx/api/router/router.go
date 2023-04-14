@@ -1,19 +1,17 @@
 package router
 
 import (
-	"qtx/api/handler/travel"
-	"qtx/api/handler/wallet"
-
 	"github.com/gin-gonic/gin"
+	"qtx/api/handler"
 )
 
-// CarbonIntegral 碳积分相关api接口
-func CarbonIntegral(rg *gin.Engine) {
+func Qtx(rg *gin.Engine) {
 	// 测试功能
-	group := rg.Group("carbonIntegral")
+	group := rg.Group("qtx")
 	{
-		group.POST("metro", travel.Metro)
-		// 注册用户钱包
-		group.POST("registerWallet", wallet.RegisterWallet)
+		// 更新用户气泡状态
+		group.POST("updateBubbleStatus", handler.UpdateBubbleStatus)
+		// 更新用户兑换状态
+		group.POST("updateExchangeStatus", handler.UpdateExchangeStatus)
 	}
 }

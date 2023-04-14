@@ -167,6 +167,22 @@ func (ch *Channel) QueueBind(name, key, exchange string) (err error) {
 	return ch.Channel.QueueBind(name, key, exchange, false, nil)
 }
 
+// QueueDeclareWithDelay 创建延迟队列
+// ps: 如果exchange、key为其他队列的，那么这里创建的就是name的死信队列
+func (ch *Channel) QueueDeclareWithDelay(name, exchange, key string) (err error) {
+	_, err = ch.Channel.QueueDeclare(name, true, false, false, false, amqp.Table{
+		"x-dead-letter-exchange":    exchange,
+		"x-dead-letter-routing-key": key,
+	})
+	return
+}
+
+// QueueDeclare 创建队列.
+func (ch *Channel) QueueDeclare(name string) (err error) {
+	_, err = ch.Channel.QueueDeclare(name, true, false, false, false, nil)
+	return
+}
+
 // NewConsumer 实例化一个消费者, 会单独用一个channel.
 func NewConsumer(queue string, handler func([]byte) error) error {
 	ch, err := defaultConn.Channel()
