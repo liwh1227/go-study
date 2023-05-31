@@ -19,6 +19,13 @@ rabbit mq是常用的消息中间件，其主要基于 `AMQP` 协议，其核心
 
 producer、exchange、queue、consumer的关系都是多对多的，所以在进行实际代码开发时候要保证好这几个实体的对应关系；
 
+*备注*
+
+理论上，consumer、channel、queue没有固定关系，为了保证消息传输的效率，按照一个consumer通过一个channel绑定一个queue原则进行消费；
+
+防止出现一个consumer消费多个queue的情况；
+
+
 ### Exchange
 
 Exchange接收到信息后，如何将消息转发到对应的Queue中？
@@ -74,10 +81,6 @@ func newConsumer(name string, mq *MQ) *Consumer {
     }
 }
 ```
-
-
-
-
 
 #### 背景
 
