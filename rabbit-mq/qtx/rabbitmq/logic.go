@@ -7,11 +7,11 @@ import (
 
 var (
 	BubbleExchange = "qtx.bc.bubble.exchange"
-	BubbleQueue    = "qtx.bc.bubble.queue"
+	BubbleQueue    = "bubble_chain"
 	BubbleKey      = "qtx.bc.bubble.key"
 
-	ExchangeExchange = "qtx.bc.exchange.exchange"
-	ExchangeQueue    = "qtx.bc.exchange.queue"
+	ExchangeExchange = "update_exchange_status"
+	ExchangeQueue    = "update_exchange_status"
 	ExchangeKey      = "qtx.bc.exchange.key"
 )
 

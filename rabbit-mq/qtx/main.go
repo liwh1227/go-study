@@ -8,13 +8,12 @@ import (
 	"os/signal"
 	"qtx/api"
 	"qtx/rabbitmq"
-	"sync"
 	"syscall"
 )
 
 const (
-	q1 = "qtx.bc.exchange.queue"
-	q2 = "qtx.bc.bubble.queue"
+	q1 = "bubble_chain"
+	q2 = "update_exchange_status"
 )
 
 var conf = rabbitmq.Conf{
@@ -22,23 +21,11 @@ var conf = rabbitmq.Conf{
 	Pwd:   "rabbit@123",
 	Addr:  "127.0.0.1",
 	Port:  "5672",
-	Vhost: "gateway-dev",
+	Vhost: "/htxtest",
 }
 
 func main() {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		err := consumer("consumer1", handleExchange)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-	}()
-
-	fmt.Println("start success...")
-	wg.Wait()
+	producer()
 }
 
 func producer() {

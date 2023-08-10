@@ -42,6 +42,7 @@ func UpdateExchangeStatus(ctx *gin.Context) {
 		cmresp.FailResponse(ctx, err)
 		return
 	}
+	fmt.Printf("%#v\n", req)
 
 	err = rabbitmq.NewChannel().Publish(rabbitmq.ExchangeExchange, rabbitmq.ExchangeKey, req)
 	if err != nil {

@@ -25,7 +25,7 @@ func Run(ctx context.Context, errChan chan error) {
 	engine := router.Init()
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf("%s:%d", "localhost", 10001),
+		Addr:    fmt.Sprintf("%s:%d", "localhost", 10000),
 		Handler: engine,
 	}
 
