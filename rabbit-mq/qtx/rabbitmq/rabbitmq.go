@@ -10,11 +10,13 @@ import (
 
 type (
 	Conf struct {
-		Addr  string
-		Port  string
-		User  string
-		Pwd   string
-		Vhost string
+		Addr       string
+		Port       string
+		User       string
+		Pwd        string
+		Vhost      string
+		MaxRetry   int
+		RetryTimes int
 	}
 )
 

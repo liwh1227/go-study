@@ -4,13 +4,76 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"log"
 )
 
 const (
-	StateClosed = iota
-	StateOpened
-	StateReopening
+	stateClosed = iota
+	stateOpened
+	stateReopening
 )
+
+// 通过queue增加consumer的处理函数
+func NewConsumerWithQueue(queue string, handler func(msg []byte) error) error {
+	c, err := GetMq().Consumer(queue)
+	if err != nil {
+		return err
+	}
+
+	msgC := make(chan Delivery, 1)
+	err = c.setQueueBinds(queue).setMsgCallback(msgC).open()
+	if err != nil {
+		return err
+	}
+
+	for msg := range msgC {
+		err = handler(msg.Body)
+		if err != nil {
+			err = msg.Reject(false)
+			if err != nil {
+				log.Println(err)
+			}
+			continue
+		}
+		err = msg.Ack(false)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
+	return err
+}
+
+// 通过声明的方式创建消费者，如果队列和excahnge不存在，会直接创建
+func NewConsumerWithDeclare(exchangeBinds []*ExchangeBinds, handler func(msg []byte) error) error {
+	c, err := GetMq().Consumer("")
+	if err != nil {
+		return err
+	}
+
+	msgC := make(chan Delivery, 1)
+	err = c.setExchangeBinds(exchangeBinds).setMsgCallback(msgC).open()
+	if err != nil {
+		return err
+	}
+
+	for msg := range msgC {
+		err = handler(msg.Body)
+		if err != nil {
+			err = msg.Reject(false)
+			if err != nil {
+				log.Println(err)
+			}
+			continue
+		}
+		err = msg.Ack(false)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
+	return err
+}
 
 // ExchangeBinds 绑定顺序：exchange ==> routeKey ==> queues
 type ExchangeBinds struct {
@@ -69,6 +132,21 @@ func DefaultQueue(name string) *Queue {
 		Exclusive:  false,
 		NoWait:     false,
 		Args:       nil,
+	}
+}
+
+// 死信队列
+func DeadLetterQueue(name, exchange, routingKey string) *Queue {
+	return &Queue{
+		Name:       name,
+		Durable:    true,
+		AutoDelete: false,
+		Exclusive:  false,
+		NoWait:     false,
+		Args: amqp.Table{
+			"x-dead-letter-exchange":    exchange,
+			"x-dead-letter-routing-key": routingKey,
+		},
 	}
 }
 

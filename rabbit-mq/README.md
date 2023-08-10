@@ -26,6 +26,13 @@ producer、exchange、queue、consumer的关系都是多对多的，所以在进
 防止出现一个consumer消费多个queue的情况；
 
 
+### 1.基础概念
+
+
+
+
+
+
 ### Exchange
 
 Exchange接收到信息后，如何将消息转发到对应的Queue中？

@@ -3,11 +3,16 @@ package rabbitmq
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"sync"
 	"time"
+
+	amqp "github.com/rabbitmq/amqp091-go"
 )
+
+var mqIns *MQ
+
+var ()
 
 type MQ struct {
 	url       string           // mq 链接的url地址
@@ -20,22 +25,40 @@ type MQ struct {
 	state     int              // MQ状态
 }
 
-func NewMQ(url, vhost string) *MQ {
+// 消息队列的封装
+func InitRabbitMq() (err error) {
+	mqIns, err = newMQ(fmt.Sprintf("amqp://%s:%s@%s:%s/",
+		conf.User,
+		conf.Pwd,
+		conf.Addr,
+		conf.Port), conf.Vhost).open()
+	if err != nil {
+		return fmt.Errorf("new mq conn err: %v", err)
+	}
+
+	return
+}
+
+func GetMq() *MQ {
+	return mqIns
+}
+
+func newMQ(url, vhost string) *MQ {
 	return &MQ{
 		url:   url,
 		vhost: vhost,
-		state: StateClosed,
+		state: stateClosed,
 	}
 }
 
 // 建立和打开mq链接
-func (m *MQ) Open() (*MQ, error) {
+func (m *MQ) open() (*MQ, error) {
 	var err error
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	// 处于打开的状态
-	if m.state == StateOpened {
+	if m.state == stateOpened {
 		return m, errors.New("MQ: had been opened")
 	}
 
@@ -44,7 +67,7 @@ func (m *MQ) Open() (*MQ, error) {
 		return m, fmt.Errorf("MQ: Dial err: %v", err)
 	}
 
-	m.state = StateOpened
+	m.state = stateOpened
 	m.stopC = make(chan struct{})
 	m.closeC = make(chan *amqp.Error, 1)
 	m.conn.NotifyClose(m.closeC)
@@ -61,7 +84,7 @@ func (m *MQ) Consumer(name string) (*Consumer, error) {
 	m.mutex.Unlock()
 
 	// 查看当前队列的状态
-	if m.state != StateOpened {
+	if m.state != stateOpened {
 		return nil, errors.New("mq is not open state")
 	}
 
@@ -75,7 +98,7 @@ func (m *MQ) Close() {
 
 	// close consumers
 	for _, c := range m.consumers {
-		c.Close()
+		c.close()
 	}
 	m.consumers = m.consumers[:0]
 
@@ -90,7 +113,7 @@ func (m *MQ) Close() {
 	m.mutex.Unlock()
 
 	// wait done
-	for m.State() != StateClosed {
+	for m.State() != stateClosed {
 		time.Sleep(time.Second)
 	}
 }
@@ -103,35 +126,35 @@ func (m *MQ) keepalive() {
 	select {
 	case <-m.stopC:
 		// 正常关闭
-		log.Println("[WARN] MQ: Shutdown normally.")
+		log.Println("MQ: Shutdown normally.")
 		m.mutex.Lock()
 		m.conn.Close()
-		m.state = StateClosed
+		m.state = stateClosed
 		m.mutex.Unlock()
 
 	case err := <-m.closeC:
 		if err == nil {
-			log.Println("[ERROR] MQ: Disconnected with MQ, but Error detail is nil")
+			log.Println("MQ: Disconnected with MQ, but Error detail is nil")
 		} else {
-			log.Printf("[ERROR] MQ: Disconnected with MQ, code:%d, reason:%s\n", err.Code, err.Reason)
+			log.Printf("MQ: Disconnected with MQ, code:%d, reason:%s\n", err.Code, err.Reason)
 		}
 
 		// tcp连接中断, 重新连接
 		m.mutex.Lock()
-		m.state = StateReopening
+		m.state = stateReopening
 		m.mutex.Unlock()
 
 		maxRetry := 100
 		for i := 0; i < maxRetry; i++ {
 			time.Sleep(3 * time.Second)
-			if _, e := m.Open(); e != nil {
-				log.Printf("[ERROR] MQ: Connection recover failed for %d times, %v\n", i+1, e)
+			if _, e := m.open(); e != nil {
+				log.Printf("MQ: Connection recover failed for %d times, %v\n", i+1, e)
 				continue
 			}
-			log.Printf("[INFO] MQ: Connection recover OK. Total try %d times\n", i+1)
+			log.Printf("MQ: Connection recover OK. Total try %d times\n", i+1)
 			return
 		}
-		log.Printf("[ERROR] MQ: Try to reconnect to MQ failed over maxRetry(%d), so exit.\n", maxRetry)
+		log.Printf("MQ: Try to reconnect to MQ failed over maxRetry(%d), so exit.\n", maxRetry)
 	}
 }
 
