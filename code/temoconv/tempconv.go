@@ -16,11 +16,3 @@ const (
 func (c Celsius) String() string { return fmt.Sprintf("%g C", c) }
 
 func (f Fahrenheit) String() string { return fmt.Sprintf("%g C", f) }
-
-func init() {
-	fmt.Println("init 1")
-}
-
-func init() {
-	fmt.Println("init 2")
-}
