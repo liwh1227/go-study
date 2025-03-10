@@ -1,9 +1,9 @@
 package main
 
 import (
-	"go-study/method"
+	"go-study/interfacex"
 )
 
 func main() {
-	method.TestMethod3()
+	interfacex.Reader("sss")
 }
