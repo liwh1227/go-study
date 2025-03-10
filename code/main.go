@@ -1,7 +1,9 @@
 package main
 
-import "go-study/funcx"
+import (
+	"go-study/method"
+)
 
 func main() {
-	funcx.TestC()
+	method.TestMethod3()
 }
