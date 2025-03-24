@@ -1,5 +1,7 @@
 package interfacex
 
-func Reader(s string) {
+import "fmt"
 
+func Reader(s string) {
+	fmt.Println(s)
 }
